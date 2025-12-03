@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   UserCircle, House, WashingMachine, Shirt, Package,
-  Clock, ClipboardList, Star, ChevronLeft, X, Calendar, Users, Search, Bell, MapPin, Globe, Cake, ChevronDown, ChevronRight, Wand, Edit
+  Clock, ClipboardList, Star, ChevronLeft, X, Calendar, Users, Search, Bell, MapPin, Globe, Cake, ChevronDown, ChevronRight, Wand, Edit, Shield, FileText
 } from 'lucide-react';
 import * as FirebaseService from './services/firebaseService';
 import RegisterPage from './components/RegisterPage';
@@ -279,7 +279,7 @@ const HomeHeader = ({ searchQuery, setSearchQuery, goToPage }) => (
     <div className="flex justify-between items-center mb-6">
       <div className="flex items-center">
         <div className="bg-white p-2 rounded-xl mr-3 shadow-lg">
-          <Star size={24} className="text-primary fill-yellow-400" />
+          <img src="/assets/logo.png" alt="Saaf Kardo" className="h-8 w-auto object-contain" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">Saaf Kardo</h1>
@@ -305,25 +305,55 @@ const HomeHeader = ({ searchQuery, setSearchQuery, goToPage }) => (
 
 const ServiceCard = ({ service, onBookPress }) => {
   const IconComponent = getIconComponent(service.iconName);
+
+  // Map service names to local images
+  const getServiceImage = (name) => {
+    if (name.includes('Deep Cleaning')) return '/assets/deep_cleaning.png';
+    if (name.includes('Kitchen')) return '/assets/kitchen_cleaning.png';
+    if (name.includes('Laundry')) return '/assets/laundry_service.png';
+    if (name.includes('Move')) return '/assets/move_in_out_cleaning.png';
+    if (name.includes('Sofa')) return '/assets/sofa_carpet_cleaning.png';
+    return null;
+  };
+
+  const imageSrc = getServiceImage(service.name);
+
   return (
-    <div className="flex flex-col md:flex-row items-start bg-white rounded-xl p-4 shadow-sm hover:shadow-lg transition-shadow duration-300 mb-4 border border-gray-100">
-      <div className="p-3 rounded-xl mr-4 bg-purple-50 text-primary">
-        <IconComponent size={30} />
+    <div className="flex flex-col bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 mb-4 border border-gray-100 overflow-hidden">
+      {imageSrc ? (
+        <div className="h-40 w-full overflow-hidden relative">
+          <img src={imageSrc} alt={service.name} className="w-full h-full object-cover" />
+          <div className="absolute top-2 left-2 bg-white p-2 rounded-full shadow-md text-primary">
+            <IconComponent size={20} />
+          </div>
+        </div>
+      ) : (
+        <div className="h-24 bg-purple-50 flex items-center justify-center text-primary">
+          <IconComponent size={40} />
+        </div>
+      )}
+
+      <div className="p-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-lg font-bold text-gray-800">{service.name}</h2>
+            <p className="text-sm text-gray-500 my-1 line-clamp-2">{service.description}</p>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center mt-4">
+          <p className="text-xs font-medium italic text-gray-500 flex items-center">
+            {service.type === 'hourly' ? <Clock size={12} className="mr-1" /> : <ClipboardList size={12} className="mr-1" />}
+            {service.type === 'hourly' ? 'Hourly Service' : 'Project Based'}
+          </p>
+          <button
+            className="px-4 py-2 rounded-lg bg-secondary text-white font-semibold hover:bg-cyan-500 transition-colors text-sm"
+            onClick={() => onBookPress(service)}
+          >
+            Book Now
+          </button>
+        </div>
       </div>
-      <div className="flex-1 mt-3 md:mt-0">
-        <h2 className="text-lg font-bold text-gray-800">{service.name}</h2>
-        <p className="text-sm text-gray-500 my-1">{service.description}</p>
-        <p className="text-xs font-medium italic text-gray-500 flex items-center">
-          {service.type === 'hourly' ? <Clock size={12} className="mr-1" /> : <ClipboardList size={12} className="mr-1" />}
-          {service.type === 'hourly' ? 'Hourly Service' : 'Project Based'}
-        </p>
-      </div>
-      <button
-        className="mt-4 md:mt-0 md:ml-4 w-full md:w-auto px-4 py-2 rounded-lg bg-secondary text-white font-semibold hover:bg-cyan-500 transition-colors"
-        onClick={() => onBookPress(service)}
-      >
-        Book Appointment
-      </button>
     </div>
   );
 };
@@ -380,8 +410,8 @@ const LoginPage = ({ onLoginSuccess, onRegisterPress }) => {
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center p-6 bg-gray-50">
-      <div className="bg-primary p-4 rounded-full mb-6 shadow-xl">
-        <Star size={48} className="text-white fill-yellow-400" />
+      <div className="bg-white p-6 rounded-3xl mb-8 shadow-xl flex items-center justify-center">
+        <img src="/assets/logo.png" alt="Saaf Kardo" className="h-32 w-auto object-contain" />
       </div>
       <h1 className="text-4xl font-extrabold text-primary mb-1">Saaf Kardo</h1>
       <p className="text-md italic text-gray-500 mb-8">"Sab Saaf Kar Do"</p>
@@ -753,7 +783,13 @@ const WorkersPage = ({ goToPage }) => {
           {workers.map(worker => (
             <div key={worker.id} className="p-4 bg-white rounded-xl shadow-lg border border-gray-100">
               <div className="flex items-center space-x-4 border-b pb-4 mb-4">
-                <img src={worker.photo} alt={worker.name} className="w-16 h-16 rounded-full object-cover border-4 border-purple-200" />
+                {worker.photo ? (
+                  <img src={worker.photo} alt={worker.name} className="w-16 h-16 rounded-full object-cover border-4 border-purple-200" />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center text-primary font-bold text-xl border-4 border-purple-200">
+                    {worker.name.charAt(0)}
+                  </div>
+                )}
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <h3 className="text-lg font-bold text-gray-800">{worker.name}</h3>
@@ -767,15 +803,29 @@ const WorkersPage = ({ goToPage }) => {
               </div>
               <p className="text-sm text-gray-500 mb-3">{worker.bio}</p>
               <div className="grid grid-cols-2 gap-y-2 text-sm">
-                <p className="flex items-center text-gray-600"><MapPin size={16} className="mr-2 text-gray-400" /> {worker.location}</p>
-                <p className="flex items-center text-gray-600"><Globe size={16} className="mr-2 text-gray-400" /> {worker.languages.join(', ')}</p>
+                <p className="flex items-center text-gray-600"><MapPin size={16} className="mr-2 text-gray-400" /> {worker.location || 'Location not set'}</p>
+                <p className="flex items-center text-gray-600"><Globe size={16} className="mr-2 text-gray-400" /> {worker.languages ? (Array.isArray(worker.languages) ? worker.languages.join(', ') : worker.languages) : 'N/A'}</p>
                 <p className="flex items-center text-gray-600"><Cake size={16} className="mr-2 text-gray-400" /> {worker.age} Years Old</p>
               </div>
+
+              <div className="flex gap-2 mt-3">
+                {worker.policeVerified && (
+                  <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full flex items-center border border-blue-100">
+                    <Shield size={12} className="mr-1" /> Police Verified
+                  </span>
+                )}
+                {worker.residentPass && (
+                  <span className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full flex items-center border border-green-100">
+                    <FileText size={12} className="mr-1" /> Resident Pass
+                  </span>
+                )}
+              </div>
+
               <div className="mt-4 pt-3 border-t border-gray-100">
                 <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Skills</p>
                 <div className="flex flex-wrap gap-2">
-                  {worker.skills.map(skill => (
-                    <span key={skill} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md">{skill}</span>
+                  {worker.skills && (Array.isArray(worker.skills) ? worker.skills : worker.skills.split(',')).map(skill => (
+                    <span key={skill} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md">{skill.trim()}</span>
                   ))}
                 </div>
               </div>
@@ -990,11 +1040,13 @@ export default function App() {
     <div className="min-h-screen flex flex-col antialiased bg-gray-50 text-gray-800 max-w-lg mx-auto shadow-xl">
       {renderPage()}
       {notification && (
-        <Notification
-          message={notification.message}
-          type={notification.type}
-          onClose={() => setNotification(null)}
-        />
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+          <Notification
+            message={notification.message}
+            type={notification.type}
+            onClose={() => setNotification(null)}
+          />
+        </div>
       )}
       {user && currentPage !== 'Login' && currentPage !== 'Register' && currentPage !== 'AdminDashboard' && (
         <BottomNavBar currentPage={currentPage} goToPage={setCurrentPage} />

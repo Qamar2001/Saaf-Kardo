@@ -30,8 +30,8 @@ const RegisterPage = ({ onRegisterSuccess, onBackToLogin }) => {
 
     return (
         <div className="min-h-screen flex flex-col justify-center items-center p-6 bg-gray-50">
-            <div className="bg-primary p-4 rounded-full mb-6 shadow-xl">
-                <Star size={48} className="text-white fill-yellow-400" />
+            <div className="bg-white p-4 rounded-3xl mb-6 shadow-xl">
+                <img src="/assets/logo.png" alt="Saaf Kardo" className="h-32 w-auto object-contain" />
             </div>
             <h1 className="text-3xl font-extrabold text-primary mb-1">Create Account</h1>
             <p className="text-sm text-gray-500 mb-6">Join Saaf Kardo today</p>

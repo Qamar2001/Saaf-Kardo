@@ -283,6 +283,16 @@ export const addWorker = async (workerData) => {
     }
 };
 
+export const updateWorker = async (workerId, workerData) => {
+    try {
+        await updateDoc(doc(db, 'workers', workerId), workerData);
+        return { success: true };
+    } catch (error) {
+        console.error('Update worker error:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 export const deleteWorker = async (workerId) => {
     try {
         await deleteDoc(doc(db, 'workers', workerId));

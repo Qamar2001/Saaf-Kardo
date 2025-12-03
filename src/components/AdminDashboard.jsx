@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Calendar, MapPin, UserCircle, Clock, Check, X, Users, Briefcase, Plus, Trash2, Star, Shield, FileText } from 'lucide-react';
+import { ChevronLeft, Calendar, MapPin, UserCircle, Clock, Check, X, Users, Briefcase, Plus, Trash2, Star, Shield, FileText, Edit, Upload } from 'lucide-react';
 import * as FirebaseService from '../services/firebaseService';
 
 const AdminDashboard = ({ goToPage, showNotification, onLogout }) => {
@@ -10,6 +10,7 @@ const AdminDashboard = ({ goToPage, showNotification, onLogout }) => {
     const [filter, setFilter] = useState('all'); // all, pending, confirmed, completed
     const [activeTab, setActiveTab] = useState('bookings'); // bookings, workers
     const [showAddWorkerModal, setShowAddWorkerModal] = useState(false);
+    const [editingWorkerId, setEditingWorkerId] = useState(null);
     const [newWorker, setNewWorker] = useState({
         name: '',
         cnic: '',
@@ -23,7 +24,8 @@ const AdminDashboard = ({ goToPage, showNotification, onLogout }) => {
         languages: '',
         bio: '',
         age: '',
-        specialty: ''
+        specialty: '',
+        photo: '' // Data URL or Image URL
     });
 
     useEffect(() => {
@@ -92,7 +94,39 @@ const AdminDashboard = ({ goToPage, showNotification, onLogout }) => {
         }
     };
 
-    const handleAddWorker = async (e) => {
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setNewWorker({ ...newWorker, photo: reader.result });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleEditWorker = (worker) => {
+        setEditingWorkerId(worker.id);
+        setNewWorker({
+            name: worker.name || '',
+            cnic: worker.cnic || '',
+            phone: worker.phone || '',
+            location: worker.location || '',
+            address: worker.address || '',
+            policeVerified: worker.policeVerified || false,
+            residentPass: worker.residentPass || false,
+            skills: Array.isArray(worker.skills) ? worker.skills.join(', ') : (worker.skills || ''),
+            rating: worker.rating || 5.0,
+            languages: Array.isArray(worker.languages) ? worker.languages.join(', ') : (worker.languages || ''),
+            bio: worker.bio || '',
+            age: worker.age || '',
+            specialty: worker.specialty || '',
+            photo: worker.photo || ''
+        });
+        setShowAddWorkerModal(true);
+    };
+
+    const handleSaveWorker = async (e) => {
         e.preventDefault();
         setLoading(true);
 
@@ -105,18 +139,25 @@ const AdminDashboard = ({ goToPage, showNotification, onLogout }) => {
             rating: parseFloat(newWorker.rating) || 5.0
         };
 
-        const result = await FirebaseService.addWorker(workerData);
+        let result;
+        if (editingWorkerId) {
+            result = await FirebaseService.updateWorker(editingWorkerId, workerData);
+        } else {
+            result = await FirebaseService.addWorker(workerData);
+        }
+
         if (result.success) {
-            showNotification('Worker added successfully!', 'success');
+            showNotification(editingWorkerId ? 'Worker updated successfully!' : 'Worker added successfully!', 'success');
             setShowAddWorkerModal(false);
+            setEditingWorkerId(null);
             setNewWorker({
                 name: '', cnic: '', phone: '', location: '', address: '',
                 policeVerified: false, residentPass: false, skills: '',
-                rating: 5.0, languages: '', bio: '', age: '', specialty: ''
+                rating: 5.0, languages: '', bio: '', age: '', specialty: '', photo: ''
             });
             loadData();
         } else {
-            showNotification('Failed to add worker', 'error');
+            showNotification('Failed to save worker', 'error');
         }
         setLoading(false);
     };
@@ -350,7 +391,15 @@ const AdminDashboard = ({ goToPage, showNotification, onLogout }) => {
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold text-gray-800">Manage Workers</h2>
                             <button
-                                onClick={() => setShowAddWorkerModal(true)}
+                                onClick={() => {
+                                    setEditingWorkerId(null);
+                                    setNewWorker({
+                                        name: '', cnic: '', phone: '', location: '', address: '',
+                                        policeVerified: false, residentPass: false, skills: '',
+                                        rating: 5.0, languages: '', bio: '', age: '', specialty: '', photo: ''
+                                    });
+                                    setShowAddWorkerModal(true);
+                                }}
                                 className="bg-primary text-white px-4 py-2 rounded-lg flex items-center hover:bg-purple-700 transition-colors"
                             >
                                 <Plus size={18} className="mr-2" /> Add Worker
@@ -360,18 +409,31 @@ const AdminDashboard = ({ goToPage, showNotification, onLogout }) => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {workers.map(worker => (
                                 <div key={worker.id} className="bg-white p-4 rounded-xl shadow-md border border-gray-100 relative">
-                                    <button
-                                        onClick={() => handleDeleteWorker(worker.id)}
-                                        className="absolute top-4 right-4 text-red-500 hover:bg-red-50 p-1 rounded-full"
-                                        title="Delete Worker"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                    <div className="absolute top-4 right-4 flex gap-2">
+                                        <button
+                                            onClick={() => handleEditWorker(worker)}
+                                            className="text-blue-500 hover:bg-blue-50 p-1 rounded-full"
+                                            title="Edit Worker"
+                                        >
+                                            <Edit size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteWorker(worker.id)}
+                                            className="text-red-500 hover:bg-red-50 p-1 rounded-full"
+                                            title="Delete Worker"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
 
                                     <div className="flex items-start mb-4">
-                                        <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-primary font-bold text-xl mr-3">
-                                            {worker.name.charAt(0)}
-                                        </div>
+                                        {worker.photo ? (
+                                            <img src={worker.photo} alt={worker.name} className="w-12 h-12 rounded-full object-cover mr-3 border-2 border-purple-100" />
+                                        ) : (
+                                            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-primary font-bold text-xl mr-3">
+                                                {worker.name.charAt(0)}
+                                            </div>
+                                        )}
                                         <div>
                                             <h3 className="font-bold text-lg text-gray-800">{worker.name}</h3>
                                             <p className="text-primary text-sm font-medium">{worker.specialty}</p>
@@ -427,18 +489,34 @@ const AdminDashboard = ({ goToPage, showNotification, onLogout }) => {
                 )}
             </div>
 
-            {/* Add Worker Modal */}
+            {/* Add/Edit Worker Modal */}
             {showAddWorkerModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-800">Add New Worker</h2>
+                            <h2 className="text-2xl font-bold text-gray-800">{editingWorkerId ? 'Edit Worker' : 'Add New Worker'}</h2>
                             <button onClick={() => setShowAddWorkerModal(false)} className="text-gray-500 hover:text-gray-700">
                                 <X size={24} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleAddWorker} className="space-y-4">
+                        <form onSubmit={handleSaveWorker} className="space-y-4">
+                            <div className="flex justify-center mb-4">
+                                <div className="relative">
+                                    {newWorker.photo ? (
+                                        <img src={newWorker.photo} alt="Preview" className="w-24 h-24 rounded-full object-cover border-4 border-purple-100" />
+                                    ) : (
+                                        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                                            <UserCircle size={48} />
+                                        </div>
+                                    )}
+                                    <label className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full cursor-pointer hover:bg-purple-700 transition-colors">
+                                        <Upload size={16} />
+                                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                                    </label>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
@@ -573,7 +651,7 @@ const AdminDashboard = ({ goToPage, showNotification, onLogout }) => {
                                 type="submit"
                                 className="w-full bg-primary text-white py-3 rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors mt-4"
                             >
-                                Add Worker
+                                {editingWorkerId ? 'Update Worker' : 'Add Worker'}
                             </button>
                         </form>
                     </div>
