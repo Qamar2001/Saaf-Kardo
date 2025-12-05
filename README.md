@@ -170,7 +170,7 @@ This project is licensed under the MIT License.
 
 ## 👨‍💻 Developer
 
-Created by [Your Name]
+Created by Qamar Mehmood
 
 ## 🙏 Acknowledgments
 
