@@ -458,6 +458,10 @@ const ServicesPage = ({ goToPage, setSelectedService }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('All');
+
+
+  const FILTERS = ['All', 'Deep Cleaning', 'Kitchen', 'Laundry', 'Move', 'Sofa'];
 
   useEffect(() => {
     loadServices();
@@ -472,18 +476,40 @@ const ServicesPage = ({ goToPage, setSelectedService }) => {
   };
 
   const filteredServices = useMemo(() => {
-    if (!searchQuery) return services;
-    const lowerCaseQuery = searchQuery.toLowerCase();
-    return services.filter(service =>
-      service.name.toLowerCase().includes(lowerCaseQuery) ||
-      service.description.toLowerCase().includes(lowerCaseQuery)
-    );
-  }, [searchQuery, services]);
+    let filtered = services;
+
+    if (activeFilter !== 'All') {
+      filtered = filtered.filter(service => service.name.includes(activeFilter));
+    }
+
+    if (searchQuery) {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(service =>
+        service.name.toLowerCase().includes(lowerCaseQuery) ||
+        service.description.toLowerCase().includes(lowerCaseQuery)
+      );
+    }
+
+    return filtered;
+  }, [searchQuery, services, activeFilter]);
 
   const handleBook = (service) => {
     setSelectedService(service);
     goToPage('Booking');
   };
+
+  const filterScrollRef = React.useRef(null);
+
+  const scrollFilters = (direction) => {
+    if (filterScrollRef.current) {
+      const scrollAmount = 200;
+      filterScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
 
   if (loading) {
     return (
@@ -497,6 +523,45 @@ const ServicesPage = ({ goToPage, setSelectedService }) => {
   return (
     <div className="flex flex-col flex-1">
       <HomeHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} goToPage={goToPage} />
+
+      <div className="bg-white border-b border-gray-100">
+        <div className="relative flex items-center max-w-4xl mx-auto">
+          <button
+            onClick={() => scrollFilters('left')}
+            className="absolute left-0 z-10 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft size={20} className="text-gray-600" />
+          </button>
+
+          <div
+            ref={filterScrollRef}
+            className="flex overflow-x-auto p-4 space-x-3 no-scrollbar mx-10"
+          >
+            {FILTERS.map(filter => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 ${activeFilter === filter
+                  ? 'bg-primary text-white shadow-md transform scale-105'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                {filter === 'Move' ? 'Move In/Out' : filter}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => scrollFilters('right')}
+            className="absolute right-0 z-10 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+            aria-label="Scroll right"
+          >
+            <ChevronRight size={20} className="text-gray-600" />
+          </button>
+        </div>
+      </div>
+
       <div className="p-6 pt-4 overflow-y-auto flex-1 max-w-4xl mx-auto w-full pb-20">
         <p className="text-sm font-semibold mb-4 text-gray-500 text-center">
           Available in DHA 2, Naval Anchorage, & Bahria Town (1-6)
@@ -510,7 +575,7 @@ const ServicesPage = ({ goToPage, setSelectedService }) => {
         ) : (
           <div className="text-center py-10 text-gray-500">
             <Search size={48} className="mx-auto mb-3" />
-            <p>No services match "{searchQuery}".</p>
+            <p>No services match your criteria.</p>
           </div>
         )}
       </div>
