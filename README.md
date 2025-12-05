@@ -37,7 +37,7 @@ A modern, full-stack web application for booking professional cleaning services 
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/Qamar2001/Saaf-Kardo.git
    cd saaf-kardo
    ```
 
